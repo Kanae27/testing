@@ -91,9 +91,29 @@ if(!isset($_SESSION['username'])) {
 							<option value="Delivery">Delivery</option>
 						</select>
 						<h6>Type of Payment</h6>
-						<select id="payment" class="form-control" name="payment">
+						<select id="payment" class="form-control" name="payment" onchange="togglePaymentImages()">
 							<option value="">Select Payment Type</option>
 						</select>
+						
+						<div id="onlinePaymentSection" style="display: none;">
+							<div class="mt-3">
+								<h6>Payment Options:</h6>
+								<div class="row">
+									<div class="col-6">
+										<img src="gcash (2).jpg" alt="GCash" class="img-fluid mb-2">
+										<p class="small">GCash: 09123456789</p>
+									</div>
+									<div class="col-6">
+										<img src="maya.jpg" alt="Maya" class="img-fluid mb-2">
+										<p class="small">Maya: 09123456789</p>
+									</div>
+								</div>
+								<div class="form-group mt-3">
+									<label for="paymentProof">Upload Payment Proof:</label>
+									<input type="file" class="form-control-file" id="paymentProof" name="paymentProof" accept="image/*">
+								</div>
+							</div>
+						</div>
 						
 						<input type="submit" class="btn btn-block btn-primary font-weight-bold my-3 py-3" value="Proceed to Checkout">
 						<script>
@@ -120,44 +140,63 @@ if(!isset($_SESSION['username'])) {
     }
 }
 
-						
-						function validateCheckout() {
-							var payment = document.getElementById('payment').value;
-							var transaction = document.getElementById('transaction').value;
-							var total = <?php echo $total; ?>;
-							
-							if(total < 200) {
-								alert("Minimum order amount should be ₱200");
-								return false;
-							}
-							
-							if(!transaction || !payment) {
-								alert("Please select both transaction and payment type");
-								return false;
-							}
-							
-							// Send notification and proceed to checkout
-							$.ajax({
-								url: 'create_notification.php',
-								method: 'POST',
-								data: {
-									message: 'New order received!',
-									order_details: 'Transaction: ' + transaction + ', Payment: ' + payment,
-									username: '<?php echo $_SESSION["username"]; ?>'
-								},
-								success: function(response) {
-									window.location = 'checkout.php?payment=' + payment + '&transaction=' + transaction;
-								},
-								error: function() {
-									alert("Error processing order. Please try again.");
-								}
-							});
-							
-							return false;
-						}
-						
-						// Update form submission
-						document.querySelector('form').onsubmit = validateCheckout;
+function togglePaymentImages() {
+    const paymentType = document.getElementById('payment').value;
+    const onlinePaymentSection = document.getElementById('onlinePaymentSection');
+    
+    if (paymentType === 'Online Payment') {
+        onlinePaymentSection.style.display = 'block';
+    } else {
+        onlinePaymentSection.style.display = 'none';
+    }
+}
+
+function validateCheckout() {
+    var payment = document.getElementById('payment').value;
+    var transaction = document.getElementById('transaction').value;
+    var total = <?php echo $total; ?>;
+    
+    if(total < 200) {
+        alert("Minimum order amount should be ₱200");
+        return false;
+    }
+    
+    if(!transaction || !payment) {
+        alert("Please select both transaction and payment type");
+        return false;
+    }
+    
+    // Add validation for payment proof upload
+    if(payment === 'Online Payment') {
+        var paymentProof = document.getElementById('paymentProof').value;
+        if(!paymentProof) {
+            alert("Please upload proof of payment");
+            return false;
+        }
+    }
+    
+    // Send notification and proceed to checkout
+    $.ajax({
+        url: 'create_notification.php',
+        method: 'POST',
+        data: {
+            message: 'New order received!',
+            order_details: 'Transaction: ' + transaction + ', Payment: ' + payment,
+            username: '<?php echo $_SESSION["username"]; ?>'
+        },
+        success: function(response) {
+            window.location = 'checkout.php?payment=' + payment + '&transaction=' + transaction;
+        },
+        error: function() {
+            alert("Error processing order. Please try again.");
+        }
+    });
+    
+    return false;
+}
+
+// Update form submission
+document.querySelector('form').onsubmit = validateCheckout;
 						</script>
 						</form>
                     </div>
